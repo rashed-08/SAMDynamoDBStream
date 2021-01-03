@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  HelloWorld
+
+  Sample SAM Template for HelloWorld
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 60
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hello-world/
+      Handler: app.lambdaHandler
+      Runtime: nodejs12.x
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hello
+            Method: get
+  CreatePostFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello-world/
+      Handler: app.createPost
+      Runtime: nodejs12.x
+      Events:
+        CreatePost:
+          Type: Api
+          Properties:
+            Path: /create
+            Method: post
+  CreateBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: book/
+      Handler: index.createBook
+      Runtime: nodejs12.x
+      Policies: AWSLambdaDynamoDBExecutionRole
+      Events:
+        CreateBook:
+          Type: Api
+          Properties:
+            Path: /book
+            Method: post
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt MyTable.StreamArn
+            BatchSize: 100
+            StartingPosition: TRIM_HORIZON
+
+  MyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
